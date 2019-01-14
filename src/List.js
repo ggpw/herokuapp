@@ -2,6 +2,7 @@
 import React, { Component } from 'react';
 import { Table } from 'reactstrap';
 import { Button } from 'reactstrap';
+import Modal from 'react-modal';
 import Services from "./services.js"
 
 export default class List extends Component{
@@ -27,11 +28,11 @@ export default class List extends Component{
       console.log("errorCallBack getAllList");
       console.log(err);
     }
-    Services.open(method, null, successCallBack, errorCallBack);
+    Services.open(method, null, null, successCallBack, errorCallBack);
   }
   handleSubmit(event){
     const method="POST";
-    const params = {
+    const body = {
       firstName: this.state.firstName,
       lastName: this.state.lastName,
       age:this.state.age,
@@ -45,27 +46,58 @@ export default class List extends Component{
       console.log("errorCallBack handleSubmit");
       console.log(err);
     }
-    Services.open(method, params, successCallBack, errorCallBack);
+    Services.open(method, null, body, successCallBack, errorCallBack);
     event.preventDefault();
   }
   handleChange(name, event){
     this.setState({[name]: event.target.value});
   }
-  handleView(id){
+  handleViewEdit(id, isEdit){
     const method="GET";
     const successCallBack=(response)=>{
-      console.log("successCallBack handleView");
-      this.getAllList();
+      console.log("successCallBack handleViewEdit");
+      console.log(response);
+      this.setState({
+        isEdit:isEdit,
+        modalIsOpen:true,
+        idE: response.data.idE,
+        firstNameE: response.data.firstName,
+        lastNameE: response.data.lastName,
+        ageE:response.data.age,
+        photoE:response.data.photo
+      })
     };
     const errorCallBack=(err)=>{
-      console.log("errorCallBack handleView");
+      console.log("errorCallBack handleViewEdit");
       console.log(err);
     }
-    Services.open(method, id, successCallBack, errorCallBack);
+    Services.open(method, id, null, successCallBack, errorCallBack);
 
   }
-  handleEdit(item){
-    alert(JSON.stringify(item))
+  handleSubmitEdit(){
+    const method="PUT";
+    const body = {
+      firstName: this.state.firstNameE,
+      lastName: this.state.lastNameE,
+      age:this.state.ageE,
+      photo:this.state.photoE
+    }
+    const successCallBack=(response)=>{
+      console.log("successCallBack handleSubmit");
+      this.getAllList();
+      this.setState({
+        modalIsOpen:false
+      })
+    };
+    const errorCallBack=(err)=>{
+      console.log("errorCallBack handleSubmit");
+      console.log(err);
+      this.getAllList();
+      this.setState({
+        modalIsOpen:false
+      })
+    }
+    Services.open(method, this.state.idE, body, successCallBack, errorCallBack);
   }
   handleDelete(id){
     const method="DELETE";
@@ -77,12 +109,62 @@ export default class List extends Component{
       console.log("errorCallBack handleDelete");
       console.log(err);
     }
-    Services.open(method, id, successCallBack, errorCallBack);
+    Services.open(method, id, null, successCallBack, errorCallBack);
+  }
 
+  closeModal() {
+    this.setState({modalIsOpen: false});
   }
   render(){
     const {list} = this.state;
     return(
+      <div>
+        <Modal
+          isOpen={this.state.modalIsOpen}
+          onRequestClose={()=>this.closeModal()}
+          contentLabel="Detail"
+        >
+          <Table>
+            <tbody>
+              <tr><td>
+                <label>
+                  First Name:
+                  <input type="text" name="firstNameE" value={this.state.firstNameE}
+                    onChange={(event)=>this.handleChange("firstNameE", event)}/>
+                </label>
+              </td></tr>
+              <tr><td>
+                <label>
+                  Last Name:
+                  <input type="text" name="lastNameE" value={this.state.lastNameE}
+                    onChange={(event)=>this.handleChange("lastNameE", event)}/>
+                </label>
+              </td></tr>
+              <tr><td>
+                <label>
+                  Age:
+                  <input type="text" name="ageE" value={this.state.ageE}
+                    onChange={(event)=>this.handleChange("ageE", event)}/>
+                </label>
+              </td></tr>
+              <tr><td>
+                <label>
+                  Image Url:
+                  <input type="text" name="photoE" value={this.state.photoE}
+                    onChange={(event)=>this.handleChange("photoE", event)}/>
+                </label>
+                </td>
+                <td>
+                  <img src={this.state.photoE} alt="not found"/>
+              </td></tr>
+              {
+                this.state.isEdit?
+                <tr><td><Button onClick={(event)=>this.handleSubmitEdit(this.state.idE)} color="primary">Edit</Button></td></tr>
+                :null
+              }
+            </tbody>
+          </Table>
+        </Modal>
         <Table>
           <thead>
             <tr>
@@ -104,10 +186,10 @@ export default class List extends Component{
                 <td>{item.age}</td>
                 <td><img src={item.photo} alt="not found"/></td>
                 <td>
-                  <button onClick={()=>this.handleView(item.id)}>
+                  <button onClick={()=>this.handleViewEdit(item.id, false)}>
                     View
                   </button>&nbsp;
-                  <button onClick={()=>this.handleEdit(item)}>
+                  <button onClick={()=>this.handleViewEdit(item.id, true)}>
                     Edit
                   </button>&nbsp;
                   <button onClick={()=>this.handleDelete(item.id)}>
@@ -151,6 +233,7 @@ export default class List extends Component{
             </tr>
           </tbody>
         </Table>
+      </div>
     )
   }
 }

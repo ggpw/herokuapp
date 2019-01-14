@@ -1,6 +1,6 @@
 
 class ApiServices{
-  open=(method, params, successCallback, errorCallback)=>{
+  open=(method, params, body, successCallback, errorCallback)=>{
     const obj = {
       method: method,
       headers: {
@@ -8,10 +8,11 @@ class ApiServices{
       }
     }
     let url="https://simple-contact-crud.herokuapp.com/contact";
-    if(method!=="GET")obj.body= JSON.stringify(params);
-    if(method==="DELETE")url=url+"/"+params;
+    if(method!=="GET")obj.body= JSON.stringify(body);
+    if(method!=="POST")url=url+(params?"/"+params:"");
     fetch(url,obj
     ).then( res => {
+      console.log(res)
       if(res.status === 200)
         return res.json()
     }).then( resJson => {
